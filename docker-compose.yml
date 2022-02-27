@@ -1,0 +1,53 @@
+version: "3.7"
+services:
+  app:
+    container_name: app-chat
+    image: dev/sischat
+    ports:
+     - "6001:6001"
+    build:
+      args:
+        user: dockerd
+        uid: 1000
+      context: ./php-fpm
+    restart: unless-stopped
+    working_dir: /var/www/chat
+    volumes:
+      - ./chat:/var/www/chat
+    networks:
+      - backend
+  nginx:
+    image: nginx:1.17-alpine
+    restart: unless-stopped
+    container_name: nginx-chat
+    user: root
+    ports:
+      - 8021:80
+    volumes:
+      - ./chat:/var/www/chat
+      - ./nginx/sites:/etc/nginx/conf.d
+      - ./nginx/logs:/var/log/nginx
+    networks:
+      - backend
+  db:
+    image: mysql
+    container_name: db-chat
+    restart: unless-stopped
+    ports:
+      - 3306:3306
+    volumes:
+      - ./mysql/data:/var/lib/mysql
+    networks:
+      - backend
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: chat
+      MYSQL_USER: chat
+      MYSQL_PASSWORD: chat
+
+networks:
+  backend:
+    driver: bridge
+volumes:
+  db_data:
+    driver: local
